@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>致小褚</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--serif:"Songti SC","Noto Serif SC","Source Han Serif SC",STSong,SimSun,serif;--brush:"STKaiti","Kaiti SC",KaiTi,"楷体","Songti SC",serif;--sans:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--blush:#ffd9e4;--rose:#ff6f9c;--gold:#ffe3b0;--cw:96px;--ch:65px}
+html,body{height:100%;overflow:hidden;background:#0f0818}
+body{background:radial-gradient(60% 45% at 16% 10%,rgba(255,111,156,.17),transparent 70%),radial-gradient(55% 45% at 86% 90%,rgba(150,110,255,.2),transparent 70%),radial-gradient(90% 70% at 50% 42%,#34163e 0%,#1a0c27 55%,#0a0511 100%);font-family:var(--sans);color:var(--blush);-webkit-tap-highlight-color:transparent}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+
+/* 所有窗口只用 transform 定位与拖动，不触发布局 */
+.win{position:fixed;left:0;top:0;z-index:var(--z,20);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;
+ transform:translate3d(var(--x,0px),var(--y,0px),0) translate(-50%,-50%) rotate(var(--tilt,0deg)) scale(var(--sc,1))}
+.win.drag{cursor:grabbing;z-index:99999;will-change:transform}
+
+.bar{display:flex;align-items:center;gap:4px;height:16px;padding:0 7px}
+.bar i{width:5px;height:5px;border-radius:50%;background:#ff5f57}
+.bar i:nth-child(2){background:#ffbd2e}.bar i:nth-child(3){background:#28ca42}
+.bar b{font-weight:500;font-size:11px;margin-left:6px;color:var(--blush);opacity:.8}
+
+/* 周围小窗口：不透明的染色玻璃，不用 backdrop-filter */
+.card{width:var(--cw);height:var(--ch);border-radius:11px;overflow:hidden;contain:layout style;
+ background:linear-gradient(150deg,hsl(var(--h) 90% 78%/.24),hsl(var(--h) 90% 60%/.06)),hsl(var(--h) 38% 15%);
+ border:1px solid hsl(var(--h) 100% 86%/.26);
+ box-shadow:0 5px 14px rgba(0,0,0,.4),0 0 16px hsl(var(--h) 100% 70%/.14),inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 14px hsl(var(--h) 100% 80%/.08);
+ transition:--sc .2s ease;
+ animation:rise 1.5s cubic-bezier(.2,.8,.25,1.12) var(--d,0s) backwards}
+@property --sc{syntax:'<number>';inherits:false;initial-value:1}
+.card:hover{z-index:9000;--sc:1.1}
+.win.drag{z-index:99999;transition:none}
+.card .txt{height:calc(100% - 16px);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 7px 3px;
+ font:600 clamp(10px,calc(var(--cw)*.125),13px)/1.35 var(--serif);color:hsl(var(--h) 100% 94%);text-shadow:0 0 8px hsl(var(--h) 100% 70%/.5);
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;padding-top:calc((var(--ch) - 16px)/2 - 1.4em)}
+@keyframes rise{from{opacity:0;transform:translate3d(var(--sx),var(--sy),0) translate(-50%,-50%) rotate(var(--r)) scale(.9)}
+ 62%{opacity:1;transform:translate3d(var(--x),var(--y),0) translate(-50%,-50%) rotate(calc(var(--r)*-.4)) scale(1.05)}}
+
+/* 中央窗口 */
+.center{width:clamp(158px,21vw,248px);aspect-ratio:4/3;border-radius:20px;overflow:hidden;--z:100;
+ background:linear-gradient(155deg,rgba(255,255,255,.2),rgba(255,255,255,.07));
+ border:1px solid rgba(255,255,255,.28);
+ box-shadow:0 0 70px rgba(255,111,156,.32),0 14px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.4);
+ -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+ animation:pop 1.6s cubic-bezier(.2,.8,.25,1) backwards}
+@keyframes pop{from{opacity:0;transform:translate3d(var(--x),var(--y),0) translate(-50%,-50%) rotate(-12deg) scale(.82)}
+ 60%{opacity:1;transform:translate3d(var(--x),var(--y),0) translate(-50%,-50%) rotate(4deg) scale(1.05)}}
+.center .bar{height:28px;padding:0 12px;gap:6px}
+.center .bar i{width:8px;height:8px}
+.center .bar b{font-size:12px}
+.love{height:calc(100% - 28px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:var(--serif);font-weight:800;text-align:center}
+.love span{font-size:clamp(17px,2vw,24px);color:var(--blush);letter-spacing:.35em;margin-right:-.35em}
+.love strong{font-size:clamp(26px,3.3vw,40px);letter-spacing:.06em;background:linear-gradient(100deg,var(--rose),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* 计时器 */
+.timer{--z:200;pointer-events:none;cursor:default;padding:12px 20px 14px;border-radius:18px;text-align:center;
+ background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.05));
+ border:1px solid rgba(255,255,255,.22);box-shadow:0 10px 30px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.3);
+ -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+ transform:translate3d(var(--x,0px),var(--y,0px),0) translate(-50%,0);
+ animation:drop 1s ease-out 2.6s backwards}
+@keyframes drop{from{opacity:0;transform:translate3d(var(--x),calc(var(--y) - 18px),0) translate(-50%,0)}}
+.timer p{font-size:13px;letter-spacing:.2em;margin-bottom:6px;opacity:.85}
+.beat{display:inline-block;color:var(--rose);animation:beat 1.4s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.3)}30%{transform:scale(1)}45%{transform:scale(1.2)}}
+.nums{display:flex;gap:14px;justify-content:center;font-variant-numeric:tabular-nums}
+.nums div{min-width:46px}.nums div+div{border-left:1px solid rgba(255,255,255,.16);padding-left:14px}
+.nums b{display:block;font:800 clamp(20px,3vw,28px)/1.1 var(--serif);color:#fff;text-shadow:0 0 14px rgba(255,111,156,.7)}
+.nums small{font-size:11px;opacity:.75}
+
+.foot{position:fixed;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));text-align:center;pointer-events:none;animation:fade 1.2s ease-out 4.5s backwards}
+.tag{font:600 clamp(15px,2vw,19px)/1.4 var(--serif);letter-spacing:.3em;color:var(--blush)}
+.tag::before,.tag::after{content:"";display:inline-block;width:28px;height:1px;vertical-align:middle;margin:0 12px;background:linear-gradient(90deg,transparent,rgba(255,180,205,.7))}.tag::after{transform:scaleX(-1)}
+.hint{margin-top:6px;font-size:12px;opacity:.5;transition:opacity .6s}
+.hint.off{opacity:0}
+@keyframes fade{from{opacity:0}}
+/* 拖动时抬升：更深的投影 + 同色辉光 */
+.win.drag{box-shadow:0 22px 44px rgba(0,0,0,.5),0 0 34px hsl(var(--h,340) 100% 70%/.4),inset 0 1px 0 rgba(255,255,255,.35)}
+/* 心形呼吸光晕 */
+.halo{position:fixed;left:0;top:0;aspect-ratio:1;border-radius:50%;pointer-events:none;z-index:1;
+ background:radial-gradient(circle,rgba(255,111,156,.3),rgba(255,111,156,.08) 45%,transparent 70%);
+ transform:translate3d(var(--x,0px),var(--y,0px),0) translate(-50%,-50%) scale(1);animation:breathe 5.5s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.55;transform:translate3d(var(--x),var(--y),0) translate(-50%,-50%) scale(.93)}50%{opacity:1;transform:translate3d(var(--x),var(--y),0) translate(-50%,-50%) scale(1.06)}}
+/* 偶尔划过的流星 */
+.meteor{position:fixed;top:var(--t);left:var(--l);width:150px;height:1.5px;pointer-events:none;opacity:0;
+ background:linear-gradient(90deg,transparent,rgba(255,255,255,.95));animation:meteor 11s linear var(--w) infinite}
+@keyframes meteor{0%{opacity:0;transform:rotate(28deg) translateX(0)}2%{opacity:1}7%{opacity:0;transform:rotate(28deg) translateX(560px)}100%{opacity:0;transform:rotate(28deg) translateX(560px)}}
+/* 中央窗口：高光与字光 */
+.center::before,.timer::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(125deg,rgba(255,255,255,.26),transparent 40%)}
+.timer::before{background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 48%)}
+.love span{text-shadow:0 0 14px rgba(255,150,190,.75)}
+.love strong{filter:drop-shadow(0 0 12px rgba(255,111,156,.55))}
+.nums b.pop{animation:tickpop .45s ease-out}
+@keyframes tickpop{from{opacity:.35;transform:translateY(-5px)}}
+@media(prefers-reduced-motion:reduce){.halo,.meteor,.nums b.pop{animation:none}}
+/* 字体与细节 */
+.tag{font:400 clamp(19px,2.4vw,26px)/1.4 var(--brush);letter-spacing:.24em}
+.love strong{font-family:var(--brush);font-weight:400;font-size:clamp(30px,3.6vw,46px);letter-spacing:.08em}
+.bar::after{content:"♥";margin-left:auto;font-size:8px;color:hsl(var(--h,345) 100% 82%);opacity:.85}
+.center .bar::after{font-size:11px}
+.center::after{content:"";position:absolute;inset:-60%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0 72%,rgba(255,205,225,.26) 86%,transparent 100%);animation:spin 10s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.center::after{animation:none}}
+@media(max-width:700px){.nums{gap:8px}.nums div{min-width:40px}.timer{padding:10px 14px 12px}.tag{letter-spacing:.2em}}
+@media(prefers-reduced-motion:reduce){.card,.center,.timer,.foot,.beat{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<canvas id="rain"></canvas>
+<canvas id="trail" style="z-index:99998"></canvas>
+<div class="halo" id="halo"></div>
+<i class="meteor" style="--t:8%;--l:52%;--w:3s"></i><i class="meteor" style="--t:24%;--l:8%;--w:8s"></i>
+
+<div class="win timer" id="timer">
+  <p>我们认识已经 <span class="beat">♥</span></p>
+  <div class="nums">
+    <div><b id="d">0</b><small>天</small></div><div><b id="h">0</b><small>小时</small></div>
+    <div><b id="m">0</b><small>分钟</small></div><div><b id="s">0</b><small>秒</small></div>
+  </div>
+</div>
+
+<div class="win center" id="center">
+  <div class="bar"><i></i><i></i><i></i><b>宝宝！</b></div>
+  <div class="love"><span>你是</span><strong>我的唯一</strong></div>
+</div>
+
+<div class="foot"><p class="tag">世界这么大还是遇见你</p><p class="hint" id="hint">拖动任意窗口可以移动位置，拖动时会覆盖其他窗口</p></div>
+
+<script>
+const messages=["你是我的星辰大海","与你相遇好幸运","一生一世一双人","愿得一人心，白首不离","心悦君兮君不知","春风十里不如你","余生请多指教","你是我限量快乐","人间不值得，你值得","遇见你三生有幸","我的世界因你完整","执子之手与子偕老","你是我的唯一","心动是你心安是你","有你在风都甜","往后余生风雪是你","你是我最美遇见","想和你走遍世界","你的笑容如阳光","每天醒来就想你","你是我最美风景","爱你最正确的事","你名是我最美情书","一见钟情再见倾心","有你每天情人节","你是我心里秘密","想和你慢慢变老","你让世界变完整","爱你是我本能","你是我心尖人","想把你揉进生命","你是糖甜到忧伤","爱你如呼吸自然","你是我不褪色梦","想和你分享日出日落","你怀抱是我港湾","爱你一生承诺","你是我心跳理由","想和你看遍繁华","你存在是我幸福","爱你最勇敢的事","你是我灵魂伴侣","想共度平凡日子","你眼中有星辰大海","爱你无需言语","你是我生命奇迹","想创造美好回忆","你声是我最爱旋律","爱你最坚定选择","你是我心柔软处","想共度漫长岁月","你笑容治愈烦恼","爱你最幸福的事","你是我前进动力","想和你走过四季","你温暖是我依靠","爱你最美好意外","你是我光","想和你看细水长流","你陪伴是我财富","爱你甜蜜责任","你是我心中永恒","想和你创未来","你爱让我更好","爱你最真诚告白","你是我梦中公主","你温柔让我沉醉","爱你最珍贵拥有","你是我心中唯一","想和你分享人生","你存在让我完整","爱你最深眷恋"];
+const $=id=>document.getElementById(id), root=document.documentElement;
+const heartXY=t=>[16*Math.sin(t)**3,-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))];
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 爱心雨：预渲染精灵图，每帧只 drawImage ---------- */
+const rain=$('rain'), rc=rain.getContext('2d');
+const sprites=['#ff5c8d','#ff7eb3','#ffafcc','#ffc2d1','#ff8fab','#d9b3ff'].map(col=>{
+  const c=document.createElement('canvas');c.width=c.height=72;const g=c.getContext('2d');
+  g.translate(36,37);g.beginPath();
+  for(let i=0;i<=40;i++){const [x,y]=heartXY(i/40*Math.PI*2);i?g.lineTo(x*1.5,y*1.5):g.moveTo(x*1.5,y*1.5)}
+  g.closePath();g.shadowColor=col;g.shadowBlur=8;g.fillStyle=col;g.fill();return c;
+});
+const bokeh=['#ff7eb3','#ffafcc','#d9b3ff','#ff8fab'].map(col=>{
+  const c=document.createElement('canvas');c.width=c.height=72;const g=c.getContext('2d');g.translate(36,37);g.beginPath();
+  for(let i=0;i<=40;i++){const [x,y]=heartXY(i/40*Math.PI*2);i?g.lineTo(x*1.1,y*1.1):g.moveTo(x*1.1,y*1.1)}
+  g.closePath();g.shadowColor=col;g.shadowBlur=22;g.fillStyle=col;g.globalAlpha=.55;g.fill();return c;
+});
+let dpr=1,W=0,H=0,hearts=[];
+function spawn(randomY){
+  const big=Math.random()<.2,size=big?40+Math.random()*30:10+Math.random()*24;
+  return {x:Math.random()*W,y:randomY?Math.random()*H:-40,size,v:20+Math.min(size,40)*1.7,ph:Math.random()*6.28,
+    sw:.6+Math.random()*.9,amp:8+Math.random()*22,rot:Math.random()*6.28,rv:(Math.random()-.5)*.8,
+    a:big?.5:.3+Math.random()*.5,s:big?bokeh[Math.random()*bokeh.length|0]:sprites[Math.random()*sprites.length|0]};
+}
+function sizeCanvas(c){c.width=W*dpr;c.height=H*dpr}
+let last=0;
+function frame(t){
+  const dt=Math.min(.05,(t-last)/1000||0);last=t;
+  rc.setTransform(1,0,0,1,0,0);rc.clearRect(0,0,rain.width,rain.height);
+  for(const h of hearts){
+    h.y+=h.v*dt;h.ph+=h.sw*dt;h.rot+=h.rv*dt;
+    if(h.y>H+40)Object.assign(h,spawn(false));
+    const x=h.x+Math.sin(h.ph)*h.amp,k=dpr*h.size/72,c=Math.cos(h.rot)*k,s=Math.sin(h.rot)*k;
+    rc.globalAlpha=h.a;rc.setTransform(c,s,-s,c,x*dpr,h.y*dpr);rc.drawImage(h.s,-36,-36);
+  }
+  if(!reduced)requestAnimationFrame(frame);
+}
+
+/* ---------- 静态星空：只在尺寸变化时绘制一次 ---------- */
+function drawStars(){
+  const c=$('bg'),g=c.getContext('2d');sizeCanvas(c);g.scale(dpr,dpr);
+  for(let i=0;i<(W<700?60:110);i++){
+    g.globalAlpha=.12+Math.random()*.45;g.fillStyle=Math.random()<.3?'#ffc2d9':'#fff';
+    g.beginPath();g.arc(Math.random()*W,Math.random()*H,.4+Math.random()*.9,0,6.28);g.fill();
+  }
+  if(geo){const {cx,cy,u}=geo;g.globalAlpha=1;
+    const gr=g.createRadialGradient(cx,cy+2*u,0,cx,cy+2*u,18*u);
+    gr.addColorStop(0,'rgba(255,90,150,.24)');gr.addColorStop(1,'rgba(255,90,150,0)');
+    g.fillStyle=gr;g.fillRect(0,0,W,H);
+    g.beginPath();for(let i=0;i<=120;i++){const [x,y]=heartXY(i/120*Math.PI*2);i?g.lineTo(cx+x*u,cy+y*u):g.moveTo(cx+x*u,cy+y*u)}
+    g.closePath();g.shadowColor='#ff6f9c';g.shadowBlur=26;g.strokeStyle='rgba(255,170,200,.38)';g.lineWidth=1.5;g.stroke();g.shadowBlur=0;
+  }
+}
+
+/* ---------- 心形：按弧长均匀取 72 个点 ---------- */
+const N=72,S=900,pts=[],cum=[0];
+for(let i=0;i<=S;i++){pts.push(heartXY(i/S*Math.PI*2));if(i)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]))}
+const spots=[];
+for(let k=0,j=0;k<N;k++){const tg=k/N*cum[S];while(cum[j]<tg)j++;spots.push(pts[j])}
+spots.sort((a,b)=>b[1]-a[1]); // 从下到上，喷泉式依次出现
+
+const moved=new WeakSet(),center=$('center'),timer=$('timer'),halo=$('halo');
+let maxZ=100,geo=null;
+function put(el,x,y){el._x=x;el._y=y;el.style.setProperty('--x',x+'px');el.style.setProperty('--y',y+'px')}
+
+const order=messages.slice().sort(()=>Math.random()-.5);
+const frag=document.createDocumentFragment();
+const cards=spots.map((p,k)=>{
+  const el=document.createElement('div');el._p=p;el.className='win card';
+  const st=el.style;
+  st.setProperty('--h',345-k*.9);st.setProperty('--z',20+k);
+  st.setProperty('--d',(2.1+k*.055).toFixed(2)+'s');
+  st.setProperty('--sx',Math.random()*innerWidth+'px');st.setProperty('--sy',innerHeight+120+'px');
+  st.setProperty('--r',(Math.random()*28-14).toFixed(1)+'deg');
+  el.innerHTML='<div class="bar"><i></i><i></i><i></i></div><div class="txt"></div>';
+  el.lastChild.textContent=order[k%order.length];
+  frag.appendChild(el);return el;
+});
+document.body.insertBefore(frag,document.querySelector('.foot'));
+
+function layout(){
+  const vw=innerWidth,vh=innerHeight,small=vw<700;
+  const cw=Math.round(clamp(vw*.085,70,108)),ch=Math.round(cw*.68);
+  root.style.setProperty('--cw',cw+'px');root.style.setProperty('--ch',ch+'px');
+  const top=small?118:134,bot=small?78:88;
+  const u=Math.min((vw-cw-20)/32,(vh-ch-top-bot)/29);
+  const extra=Math.max(0,(vh-top-bot-ch-29*u)/2);
+  const cx=vw/2,cy=top+extra+ch/2+12*u;
+  for(const c of cards)moved.has(c)?put(c,clamp(c._x,0,vw),clamp(c._y,0,vh)):put(c,cx+c._p[0]*u,cy+c._p[1]*u);
+  if(!moved.has(center))put(center,cx,cy+.5*u);
+  if(!moved.has(timer))put(timer,cx,small?12:22);
+  geo={cx,cy,u};put(halo,cx,cy+2*u);halo.style.width=34*u+'px';
+}
+
+/* ---------- 星星拖尾：粒子池，仅在有粒子时运行 ---------- */
+const trail=$('trail'),tc=trail.getContext('2d'),stars=[],tcol=['#ffffff','#ffd9e4','#ffe3b0','#ff9fc0'];
+let tRun=false,tLast=0;
+function emit(x,y,n,k=1){
+  for(let i=0;i<n&&stars.length<150;i++)stars.push({x:x+(Math.random()-.5)*34,y:y+(Math.random()-.5)*26,
+    vx:(Math.random()-.5)*26*k,vy:(6+Math.random()*22)*k-(k>1?30:0),t:0,life:.6+Math.random()*.8,r:1.2+Math.random()*2.6,
+    rot:Math.random()*3,c:tcol[Math.random()*4|0],tw:Math.random()*6});
+  if(!tRun){tRun=true;tLast=performance.now();requestAnimationFrame(trailLoop)}
+}
+function trailLoop(now){
+  const dt=Math.min(.05,(now-tLast)/1000);tLast=now;
+  tc.setTransform(dpr,0,0,dpr,0,0);tc.clearRect(0,0,W,H);tc.globalCompositeOperation='lighter';
+  for(let i=stars.length-1;i>=0;i--){
+    const q=stars[i];q.t+=dt;
+    if(q.t>=q.life){stars.splice(i,1);continue}
+    q.x+=q.vx*dt;q.y+=q.vy*dt;q.rot+=dt;
+    const k=1-q.t/q.life,r=q.r*(.5+k*.7);
+    tc.globalAlpha=k*(.65+.35*Math.sin(q.tw+q.t*12));tc.fillStyle=q.c;
+    tc.save();tc.translate(q.x,q.y);tc.rotate(q.rot);tc.beginPath();
+    for(let j=0;j<8;j++){const a=j*Math.PI/4,rr=j%2?r*.3:r*1.8;j?tc.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):tc.moveTo(rr,0)}
+    tc.closePath();tc.fill();tc.restore();
+  }
+  if(stars.length)requestAnimationFrame(trailLoop);else{tRun=false;tc.clearRect(0,0,W,H)}
+}
+
+/* ---------- 拖拽：跟手的弹性追随 + 惯性滑行 + 倾斜 ---------- */
+const live=new Set();let dLast=0,dRun=false,carry=0;
+function dragLoop(now){
+  const dt=Math.min(.04,(now-dLast)/1000)||.016;dLast=now;
+  for(const el of live){
+    let x=el._x,y=el._y,vx,vy;
+    if(el._on){
+      const f=1-Math.exp(-dt*24);x+=(el._tx-x)*f;y+=(el._ty-y)*f;
+      vx=el._vx=el._vx*.6+((x-el._x)/dt)*.4;vy=el._vy=el._vy*.6+((y-el._y)/dt)*.4;
+    }else{
+      const fr=Math.exp(-dt*3.2);vx=el._vx*=fr;vy=el._vy*=fr;x+=vx*dt;y+=vy*dt;
+      if(x<0||x>W){el._vx*=-.4;x=clamp(x,0,W)}if(y<0||y>H){el._vy*=-.4;y=clamp(y,0,H)}
+    }
+    el._tv+=((clamp(vx*.011,-12,12)-el._tilt)*170-el._tv*13)*dt;el._tilt+=el._tv*dt;
+    el._sv+=(((el._on?1.08:1)-el._sc)*330-el._sv*19)*dt;el._sc+=el._sv*dt;
+    put(el,x,y);
+    el.style.setProperty('--tilt',el._tilt.toFixed(2)+'deg');el.style.setProperty('--sc',el._sc.toFixed(3));
+    const sp=Math.hypot(vx,vy);
+    if(!reduced&&sp>45){carry+=Math.min(3,sp*dt*.045);const n=carry|0;carry-=n;
+      if(n)emit(x-vx*.012,y-vy*.012+8,n)}
+    if(!el._on&&sp<6&&Math.abs(el._tilt)<.1&&Math.abs(el._tv)<.5&&Math.abs(el._sc-1)<.003&&Math.abs(el._sv)<.03){live.delete(el);el.style.removeProperty('--tilt');el.style.removeProperty('--sc')}
+  }
+  if(live.size)requestAnimationFrame(dragLoop);else dRun=false;
+}
+function makeDraggable(el){
+  let sx,sy,ox,oy,dist=0;
+  el._vx=el._vy=el._tilt=el._tv=el._sv=0;el._sc=1;
+  el.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;el.setPointerCapture(e.pointerId);
+    el._on=true;dist=0;navigator.vibrate&&navigator.vibrate(6);sx=e.clientX;sy=e.clientY;ox=el._x;oy=el._y;el._tx=ox;el._ty=oy;el._vx=el._vy=0;
+    el.style.setProperty('--z',++maxZ);el.classList.add('drag');if(!reduced)emit(ox,oy,7,1.8);
+    live.add(el);if(!dRun){dRun=true;dLast=performance.now();requestAnimationFrame(dragLoop)}
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!el._on)return;el._tx=clamp(ox+e.clientX-sx,10,W-10);el._ty=clamp(oy+e.clientY-sy,10,H-10);
+    dist=Math.max(dist,Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy));
+  });
+  const end=()=>{if(!el._on)return;el._on=false;el.classList.remove('drag');
+    if(dist>4){moved.add(el);$('hint').classList.add('off')}else if(!reduced)emit(el._x,el._y,12,2.2);
+    const m=Math.hypot(el._vx,el._vy);if(m>2200){el._vx*=2200/m;el._vy*=2200/m}};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+}
+
+/* ---------- 计时器：对齐整秒，只在数字变化时写 DOM ---------- */
+const start=new Date('2026-08-23T22:50:00'),el={d:$('d'),h:$('h'),m:$('m'),s:$('s')};
+function setText(n,v){v=String(v);if(n.textContent!==v)n.textContent=v}
+function tick(){
+  const diff=Math.max(0,Math.floor((Date.now()-start)/1000));
+  setText(el.d,Math.floor(diff/86400));setText(el.h,Math.floor(diff%86400/3600));
+  setText(el.m,Math.floor(diff%3600/60));
+  const sv=String(diff%60);if(el.s.textContent!==sv){el.s.textContent=sv;el.s.classList.remove('pop');void el.s.offsetWidth;el.s.classList.add('pop')}
+  setTimeout(tick,1000-Date.now()%1000+5);
+}
+
+/* ---------- 初始化 ---------- */
+function resize(){
+  dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  sizeCanvas(rain);sizeCanvas(trail);layout();drawStars();
+  const n=W<700?22:36;
+  while(hearts.length<n)hearts.push(spawn(true));
+  hearts.length=n;
+}
+resize();tick();[center,...cards].forEach(makeDraggable);
+requestAnimationFrame(frame);
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(resize,150)});
+</script>
+</body>
+</html>
