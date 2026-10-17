@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>致小褚</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ma-shan-zheng/index.css" media="print" onload="this.media='all'">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--serif:"Songti SC","Noto Serif SC","Source Han Serif SC",STSong,SimSun,serif;--brush:"STKaiti","Kaiti SC",KaiTi,"楷体","Songti SC",serif;--sans:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--blush:#ffd9e4;--rose:#ff6f9c;--gold:#ffe3b0;--cw:96px;--ch:65px}
+:root{--serif:"Songti SC","Noto Serif SC","Source Han Serif SC",STSong,SimSun,serif;--brush:"Ma Shan Zheng","STKaiti","Kaiti SC",KaiTi,"楷体","Songti SC",serif;--sans:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--blush:#ffd9e4;--rose:#ff6f9c;--gold:#ffe3b0;--cw:96px;--ch:65px}
 html,body{height:100%;overflow:hidden;background:#0f0818}
 body{background:radial-gradient(60% 45% at 16% 10%,rgba(255,111,156,.17),transparent 70%),radial-gradient(55% 45% at 86% 90%,rgba(150,110,255,.2),transparent 70%),radial-gradient(90% 70% at 50% 42%,#34163e 0%,#1a0c27 55%,#0a0511 100%);font-family:var(--sans);color:var(--blush);-webkit-tap-highlight-color:transparent}
 canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
@@ -102,6 +103,15 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 .center::after{content:"";position:absolute;inset:-60%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0 72%,rgba(255,205,225,.26) 86%,transparent 100%);animation:spin 10s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.center::after{animation:none}}
+/* 音乐按钮 */
+.music{position:fixed;right:max(14px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));z-index:300;width:42px;height:42px;border-radius:50%;
+ border:1px solid rgba(255,255,255,.26);background:linear-gradient(155deg,rgba(255,255,255,.2),rgba(255,255,255,.05));color:var(--blush);font-size:19px;cursor:pointer;
+ display:grid;place-items:center;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 6px 18px rgba(0,0,0,.35);animation:fade 1s ease-out 3s backwards}
+.music[hidden]{display:none}
+.music.on span{animation:spin 4s linear infinite;text-shadow:0 0 10px rgba(255,150,190,.9)}
+.music:not(.on) span{opacity:.55}
+.music:not(.on)::after{content:"";position:absolute;width:24px;height:1.5px;background:var(--blush);transform:rotate(-45deg);opacity:.85}
+@media(prefers-reduced-motion:reduce){.music.on span{animation:none}}
 @media(max-width:700px){.nums{gap:8px}.nums div{min-width:40px}.timer{padding:10px 14px 12px}.tag{letter-spacing:.2em}}
 @media(prefers-reduced-motion:reduce){.card,.center,.timer,.foot,.beat{animation:none}}
 </style>
@@ -126,6 +136,8 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
   <div class="love"><span>你是</span><strong>我的唯一</strong></div>
 </div>
 
+<audio id="bgm" src="music.mp3" loop preload="auto"></audio>
+<button class="music" id="music" aria-label="背景音乐" hidden><span>♪</span></button>
 <div class="foot"><p class="tag">世界这么大还是遇见你</p><p class="hint" id="hint">拖动任意窗口可以移动位置，拖动时会覆盖其他窗口</p></div>
 
 <script>
@@ -315,6 +327,19 @@ function resize(){
 resize();tick();[center,...cards].forEach(makeDraggable);
 requestAnimationFrame(frame);
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(resize,150)});
+
+/* ---------- 背景音乐：浏览器禁止自动播放，所以第一次触碰页面时开始 ---------- */
+const bgm=$('bgm'),mbtn=$('music');let want=true,was=false;
+bgm.volume=.6;
+const showBtn=()=>{mbtn.hidden=false};
+bgm.addEventListener('loadedmetadata',showBtn);if(bgm.readyState>=1)showBtn();
+bgm.addEventListener('error',()=>{mbtn.hidden=true});
+const sync=()=>mbtn.classList.toggle('on',!bgm.paused);
+bgm.addEventListener('play',sync);bgm.addEventListener('pause',sync);
+mbtn.addEventListener('click',()=>{want=false;bgm.paused?bgm.play().catch(()=>{}):bgm.pause()});
+const first=e=>{if(e.target.closest&&e.target.closest('#music'))return;removeEventListener('pointerdown',first);if(want&&bgm.paused)bgm.play().catch(()=>{})};
+addEventListener('pointerdown',first);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){was=!bgm.paused;bgm.pause()}else if(was){was=false;bgm.play().catch(()=>{})}});
 </script>
 </body>
 </html>
